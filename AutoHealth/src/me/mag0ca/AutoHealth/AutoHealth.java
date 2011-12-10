@@ -31,19 +31,20 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.logging.Logger;
 import java.io.FileInputStream;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
-import org.bukkit.plugin.Plugin;
+//import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.nijiko.permissions.PermissionHandler;
-import com.nijikokun.bukkit.Permissions.Permissions;
+//import com.nijiko.permissions.PermissionHandler;
+//import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class AutoHealth extends JavaPlugin {
 	private File m_Folder = new File("plugins" + File.separator + "AutoHealth");
@@ -51,19 +52,20 @@ public class AutoHealth extends JavaPlugin {
 	private HashMap<String, AHWorld> worldProp = new HashMap<String, AHWorld>();
 	private HashMap<String, AHWorld> worldList = new HashMap<String, AHWorld>();
 	private final AHPlayerListener playerListener = new AHPlayerListener(this); // Listen to players
-	public static PermissionHandler Permissions;
-	public boolean installedPermissions = false;
-
+//	public static PermissionHandler Permissions;
+//	public boolean installedPermissions = false;
+	Logger log = Logger.getLogger("Minecraft");
+	
 	public void onEnable() {
 
 		PluginDescriptionFile pdfFile = this.getDescription();
-		System.out.println("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] (actruncale) is loaded.");
+		log.info("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] is loaded.");
 
 		// create files if not found: Folder, default.properties
 		createFiles();
 		loadDefaultProps();
 		loadWorldList();
-		setupPermissions();
+//		setupPermissions();
 
 		for (Entry<String, AHWorld> entry : worldList.entrySet()) {
 			loadWorldProps(entry.getKey());
@@ -90,43 +92,22 @@ public class AutoHealth extends JavaPlugin {
 				line = reader.readLine();
 			}
 
-		} catch (Exception ex) {
-
-		}
+		} catch (Exception ex) {}
 
 	}
 
 	public void onDisable() {
-		System.out.println("Goodbye world!");
+		PluginDescriptionFile pdfFile = this.getDescription();
+		log.info("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] is Disabled.");
+
 		m_Timer.cancel();
 	}
 
-	private void setupPermissions() {
-		Plugin test = this.getServer().getPluginManager().getPlugin("Permissions");
-
-		if (Permissions == null) {
-			if (test != null) {
-				Permissions = ((Permissions) test).getHandler();
-				installedPermissions = true;
-			} else {
-				System.out.println("[AutoHealth] Permission system not detected, everyone gets heals!");
-				installedPermissions = false;
-			}
-		}
-	}
-
-	public void handleHealth(long time) {
-
-		if (installedPermissions == true) {
-			for (Player player : getServer().getOnlinePlayers()) {
-				if (Permissions.has(player, "autohealth")) {
+	public void handleHealth(long time) {	
+		for (Player player : getServer().getOnlinePlayers()) {
+				if (player.hasPermission("autohealth")) {
 					healPlayer(player, time);
 				}
-			}
-		} else {
-			for (Player player : getServer().getOnlinePlayers()) {
-				healPlayer(player, time);
-			}
 		}
 	}
 
@@ -201,7 +182,7 @@ public class AutoHealth extends JavaPlugin {
 
 	public void createFiles() {
 		if (!m_Folder.exists()) {
-			System.out.print("AutoHealth: Config folder missing, creating...");
+			log.info("[AutoHealth] Config folder missing, creating...");
 			m_Folder.mkdir();
 		}
 
@@ -217,13 +198,13 @@ public class AutoHealth extends JavaPlugin {
 				writer.close();
 
 			} catch (IOException ex) {
-				System.out.println("failed to load WORLDLIST.txt");
+				log.info("[AutoHealth] failed to load WORLDLIST.txt");
 			}
 		}
 
 		File defaultConfig = new File(m_Folder.getAbsolutePath() + File.separator + "default.properties");
 		if (!defaultConfig.exists()) {
-			System.out.print("AutoHealth: default.properties is missing, creating...");
+			log.info("[AutoHealth] default.properties is missing, creating...");
 			try {
 				defaultConfig.createNewFile();
 
@@ -281,7 +262,7 @@ public class AutoHealth extends JavaPlugin {
 				bedHeal = Integer.parseInt(props.getProperty("sleep-heal"));
 
 		} catch (IOException ioe) {
-			System.out.println("Default has no property file. Please create one.");
+			log.info("[AutoHealth] Default has no property file. Please create one.");
 		}
 
 		worldProp.put("default", new AHWorld("default", rate, healAmount, maxHeal, minHeal, altitude, bedHeal));
@@ -314,7 +295,7 @@ public class AutoHealth extends JavaPlugin {
 				bedHeal = Integer.parseInt(props.getProperty("sleep-heal"));
 
 		} catch (IOException ioe) {
-			System.out.println(worldName + " has no property file, using default values.");
+			log.info("[AutoHealth] " + worldName + " has no property file, using default values.");
 			File config = new File(m_Folder.getAbsolutePath() + File.separator + worldName + ".properties");
 
 			try {
