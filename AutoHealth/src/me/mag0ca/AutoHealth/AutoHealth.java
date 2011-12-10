@@ -52,7 +52,10 @@ public class AutoHealth extends JavaPlugin {
 	private HashMap<String, AHWorld> worldProp = new HashMap<String, AHWorld>();
 	private HashMap<String, AHWorld> worldList = new HashMap<String, AHWorld>();
 	private final AHPlayerListener playerListener = new AHPlayerListener(this); // Listen to players
-//	public static PermissionHandler Permissions;
+	private final AHEntityListener entityListener = new AHEntityListener(this); // Listen to players
+	
+	
+	//	public static PermissionHandler Permissions;
 //	public boolean installedPermissions = false;
 	Logger log = Logger.getLogger("Minecraft");
 	
@@ -74,7 +77,7 @@ public class AutoHealth extends JavaPlugin {
 
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Event.Type.PLAYER_BED_LEAVE, playerListener, Priority.Normal, this);
-
+		pm.registerEvent(Event.Type.FOOD_LEVEL_CHANGE, entityListener, Priority.Normal, this);
 		m_Timer.schedule(new SimpleTimer(this), 0, (long) (1000));
 	}
 
@@ -86,7 +89,7 @@ public class AutoHealth extends JavaPlugin {
 			while (line != null) {
 				String[] values = line.split(";");
 				for (int x = 0; x < values.length; x++) {
-					worldList.put(values[x], new AHWorld(values[x], 0, 0, 0, 0, 0, 0));
+					worldList.put(values[x], new AHWorld(values[x], 0, 0, 0, 0, 0, 0, 0));
 				}
 
 				line = reader.readLine();
@@ -99,8 +102,32 @@ public class AutoHealth extends JavaPlugin {
 	public void onDisable() {
 		PluginDescriptionFile pdfFile = this.getDescription();
 		log.info("[" + pdfFile.getName() + "] version [" + pdfFile.getVersion() + "] is Disabled.");
-
 		m_Timer.cancel();
+	}
+	
+	public boolean cancelFood(Player player)
+	{
+		boolean TF = false;
+		
+		if (player.hasPermission("autohealth")) {
+			String PWorld = player.getLocation().getWorld().getName();
+			int stopfood;
+			int altitude;
+			
+			if (worldProp.containsKey(PWorld)) {
+				stopfood = worldProp.get(PWorld).stopfood;
+				altitude = worldProp.get(PWorld).altitude;
+			}else {
+				stopfood = worldProp.get("default").stopfood;
+				altitude = worldProp.get("default").altitude;
+			}
+			
+			if (player.getLocation().getBlockY() >= altitude && stopfood == 1) {
+				//log.info("player: " + player.getName() + "Food Level: " + player.getFoodLevel() + "stopfood = " + stopfood);
+				TF = true; 
+			}
+		}
+		return TF;
 	}
 
 	public void handleHealth(long time) {	
@@ -224,6 +251,8 @@ public class AutoHealth extends JavaPlugin {
 					writer.newLine();
 					writer.write("sleep-heal" + ":" + "20");
 					writer.newLine();
+					writer.write("stop-food" + ":" + "1");
+					writer.newLine();
 
 					writer.close();
 
@@ -246,6 +275,8 @@ public class AutoHealth extends JavaPlugin {
 		int minHeal = 0;
 		int altitude = 0;
 		int bedHeal = 20;
+		int stopfood = 0;
+		
 		try {
 			props.load(new FileInputStream(m_Folder.getAbsolutePath() + File.separator + "default.properties"));
 			if (props.containsKey("regen-rate"))
@@ -260,12 +291,14 @@ public class AutoHealth extends JavaPlugin {
 				altitude = Integer.parseInt(props.getProperty("regen-altitude"));
 			if (props.containsKey("sleep-heal"))
 				bedHeal = Integer.parseInt(props.getProperty("sleep-heal"));
-
+			if (props.containsKey("stop-food"))
+				stopfood = Integer.parseInt(props.getProperty("stop-food"));
+			
 		} catch (IOException ioe) {
 			log.info("[AutoHealth] Default has no property file. Please create one.");
 		}
 
-		worldProp.put("default", new AHWorld("default", rate, healAmount, maxHeal, minHeal, altitude, bedHeal));
+		worldProp.put("default", new AHWorld("default", rate, healAmount, maxHeal, minHeal, altitude, bedHeal, stopfood));
 	}
 
 	public void loadWorldProps(String worldName) {
@@ -278,7 +311,9 @@ public class AutoHealth extends JavaPlugin {
 		int minHeal = worldProp.get("default").minHeal;
 		int altitude = worldProp.get("default").altitude;
 		int bedHeal = worldProp.get("default").bedHeal;
-
+		int stopfood = worldProp.get("default").stopfood;
+		
+				
 		try {
 			props.load(new FileInputStream(m_Folder.getAbsolutePath() + File.separator + worldName + ".properties"));
 			if (props.containsKey("regen-rate"))
@@ -293,7 +328,9 @@ public class AutoHealth extends JavaPlugin {
 				altitude = Integer.parseInt(props.getProperty("regen-altitude"));
 			if (props.containsKey("sleep-heal"))
 				bedHeal = Integer.parseInt(props.getProperty("sleep-heal"));
-
+			if (props.containsKey("stop-food"))
+				stopfood = Integer.parseInt(props.getProperty("stop-food"));
+			
 		} catch (IOException ioe) {
 			log.info("[AutoHealth] " + worldName + " has no property file, using default values.");
 			File config = new File(m_Folder.getAbsolutePath() + File.separator + worldName + ".properties");
@@ -315,6 +352,8 @@ public class AutoHealth extends JavaPlugin {
 				writer.newLine();
 				writer.write("sleep-heal" + ":" + "20");
 				writer.newLine();
+				writer.write("stop-food" + ":" + "0");
+				writer.newLine();
 
 				writer.close();
 
@@ -323,7 +362,7 @@ public class AutoHealth extends JavaPlugin {
 			}
 		}
 
-		worldProp.put(worldName, new AHWorld(worldName, rate, healAmount, maxHeal, minHeal, altitude, bedHeal));
+		worldProp.put(worldName, new AHWorld(worldName, rate, healAmount, maxHeal, minHeal, altitude, bedHeal, stopfood));
 
 	}
 

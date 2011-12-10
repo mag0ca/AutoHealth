@@ -18,40 +18,35 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307, USA.
  */
-
 package me.mag0ca.AutoHealth;
 
-public class AHWorld {
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityListener;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+
+public class AHEntityListener extends EntityListener{
+
+	private final AutoHealth plugin;
 	
-	public String name;
-	public int rate;
-	public int amount;
-	public int maxHeal;
-	public int minHeal;
-	public int altitude;
-	public int bedHeal;
-	public int stopfood;
-	
-	public AHWorld(String name, int Xrate, int Xamount, int XmaxHeal, int XminHeal, int Xaltitude, int XbedHeal, int Xstopfood ) {
-		rate = Xrate;
-		amount = Xamount;
-		maxHeal = XmaxHeal;
-		minHeal = XminHeal;
-		altitude = Xaltitude;
-		bedHeal = XbedHeal;
-		stopfood = Xstopfood;
+	public AHEntityListener(final AutoHealth plugin) {
+		this.plugin = plugin;
 	}
+
 	
-	public void set(String name, int Xrate, int Xamount, int XmaxHeal, int XminHeal, int Xaltitude, int XbedHeal, int Xstopfood ) {
-		rate = Xrate;
-		amount = Xamount;
-		maxHeal = XmaxHeal;
-		minHeal = XminHeal;
-		altitude = Xaltitude;
-		bedHeal = XbedHeal;
-		stopfood = Xstopfood;
+	public void onFoodLevelChange(FoodLevelChangeEvent Event)
+	{
+		
+		if (Event.getEntity() instanceof Player)
+		{
+			Player player = (Player) Event.getEntity();
+			//plugin.log.info("player = " + player.getName());
+			if (plugin.cancelFood(player))
+			{
+				Event.setFoodLevel(20);
+			}
+			
+		}
 	}
-	
 	
 
 }

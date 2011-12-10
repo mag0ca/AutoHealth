@@ -22,9 +22,13 @@
 package me.mag0ca.AutoHealth;
 
 import org.bukkit.World;
+//import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerListener;
+
+//import com.avaje.ebeaninternal.server.deploy.BeanDescriptor.EntityType;
 
 public class AHPlayerListener extends PlayerListener{
 
@@ -41,6 +45,16 @@ public class AHPlayerListener extends PlayerListener{
 		
 		if(time >= 0 && time < 6000 ){
 			plugin.healPlayerInBed(player);
+		}
+	}
+	
+	public void onFoodLevelChange(FoodLevelChangeEvent Event)
+	{
+		
+		if (Event.getEntity() instanceof Player)
+		{
+			Player player = (Player) Event.getEntity();
+			plugin.cancelFood(player);
 		}
 	}
 	
