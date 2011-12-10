@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 <mag0ca>
+ * Copyright (C) 2011 <mag0ca@yahoo.ca>
  *
  * This file is part of the Bukkit plugin AutoHealth based off of SlowHealth by <adam@truncale.net>.
  *
